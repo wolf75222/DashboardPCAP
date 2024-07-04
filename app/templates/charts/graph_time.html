@@ -1,0 +1,75 @@
+<div
+    class="flex-1 lg:w-full bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6"
+>
+    <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
+        Paquets au fil du temps
+    </h1>
+    <!-- Chart Container -->
+    <div id="graphTimeChart"></div>
+</div>
+<script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var graphData = {{ packets.time_series_data() | tojson | safe }};
+
+            var options = {
+                series: [{
+                    name: 'CAM',
+                    data: graphData.cam_counts.map((count, index) => ({
+                        x: new Date(graphData.times[index]),
+                        y: count
+                    })),
+                    type: 'line',
+                    color: '#FF4560' // red
+                }, {
+                    name: 'DENM',
+                    data: graphData.denm_counts.map((count, index) => ({
+                        x: new Date(graphData.times[index]),
+                        y: count
+                    })),
+                    type: 'line',
+                    color: '#008FFB' // blue
+                }, {
+                    name: 'Autres',
+                    data: graphData.other_counts.map((count, index) => ({
+                        x: new Date(graphData.times[index]),
+                        y: count
+                    })),
+                    type: 'line',
+                    color: '#00E396' // green
+                }],
+                chart: {
+                    type: 'line',
+                    height: 350,
+                    zoom: {
+                        enabled: true,
+                        type: 'x'
+                    }
+                },
+                stroke: {
+                    curve: 'smooth'
+                },
+                markers: {
+                    size: 0
+                },
+                xaxis: {
+                    type: 'datetime',
+                    labels: {
+                        format: 'yyyy-MM-dd HH:mm:ss'
+                    }
+                },
+                tooltip: {
+                    x: {
+                        format: 'dd MMM yyyy HH:mm:ss'
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Nombre de paquets'
+                    }
+                }
+            };
+
+        var chart = new ApexCharts(document.querySelector("#graphTimeChart"), options);
+        chart.render();
+    });
+</script>

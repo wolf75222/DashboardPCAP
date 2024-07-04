@@ -1,0 +1,33 @@
+# Doxyfile
+
+# Source files
+INPUT                  = ./app
+FILE_PATTERNS          = *.py
+EXCLUDE                = */tests/* */venv/* */node_modules/* */static/*
+RECURSIVE              = YES
+
+# Configuration options
+GENERATE_HTML          = YES
+GENERATE_DOCBOOK       = NO
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+GENERATE_TAGFILE       = 
+ALLEXTERNALS           = NO
+EXTERNAL_GROUPS        = YES
+EXTERNAL_PAGES         = YES
+CLASS_DIAGRAMS         = NO
+HIDE_UNDOC_RELATIONS   = YES
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_IMAGE_FORMAT       = png
+DOT_PATH               = /usr/bin/dot
+EXTRACT_ALL            = YES

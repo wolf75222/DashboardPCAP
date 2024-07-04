@@ -1,0 +1,9 @@
+flask
+gunicorn
+python-dotenv
+flask_caching
+flask-socketio
+requests
+datetime
+haversine
+dateutils

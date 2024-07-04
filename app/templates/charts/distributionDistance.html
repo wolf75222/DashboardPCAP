@@ -1,0 +1,115 @@
+<div class="w-full h-auto bg-white rounded-lg shadow dark:bg-gray-800 p-6 my-4">
+    <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+        Distribution des distances des réceptions de paquets DENM
+    </h1>
+    <!-- Container for the distance distribution chart -->
+    <div
+        id="distanceDistributionChartContainer"
+        class="bg-white rounded-lg shadow p-4 mb-6"
+        style="height: 400px"
+    ></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Retrieve the distance data from the server-side rendering context
+        var distanceDistributionData = {{ packets.get_distance_distribution() | tojson | safe }};
+        console.log(distanceDistributionData);  // Debugging: Check the data in the console
+        var distanceDistributionChartContainer = document.getElementById('distanceDistributionChartContainer');
+
+        // Prepare data for the chart
+        var seriesData = [];
+        for (var range in distanceDistributionData) {
+            if (distanceDistributionData.hasOwnProperty(range) && distanceDistributionData[range].count > 0) {
+                seriesData.push({
+                    x: range,
+                    y: Math.round(distanceDistributionData[range].percentage), // Round values to the nearest integer
+                    count: distanceDistributionData[range].count,
+                    stations: distanceDistributionData[range].stations
+                });
+            }
+        }
+
+        // Sort seriesData by the numeric value of the distance range
+        seriesData.sort((a, b) => {
+            const [aMin, aMax] = a.x.split('-').map(Number);
+            const [bMin, bMax] = b.x.split('-').map(Number);
+            return aMin - bMin;
+        });
+
+        // Chart options
+        var distanceDistributionChartOptions = {
+            series: [{
+                name: 'Pourcentage de paquets',
+                data: seriesData
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                zoom: {
+                    enabled: true,
+                    type: 'xy',  // Allow both horizontal and vertical zooming
+                    autoScaleYaxis: true
+                },
+                toolbar: {
+                    tools: {
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    },
+                    autoSelected: 'zoom'  // Select zoom tool by default
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '50%',
+                    endingShape: 'rounded'
+                }
+            },
+            xaxis: {
+                title: {
+                    text: 'Intervalles de distances (mètres)'
+                },
+                categories: seriesData.map(data => data.x),
+                tickPlacement: 'on'  // Enable zooming on category axis
+            },
+            yaxis: {
+                title: {
+                    text: 'Pourcentage de paquets'
+                },
+                labels: {
+                    formatter: function (value) {
+                        return value + '%'; // Display percentages
+                    }
+                }
+            },
+            grid: {
+                padding: {
+                    left: 30,
+                    right: 30
+                }
+            },
+            tooltip: {
+                custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                    var data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
+                    var stationsInfo = Object.keys(data.stations).map(station =>
+                        `<div>${station}: ${data.stations[station]} paquets</div>`
+                    ).join('');
+                    return `<div class="apexcharts-tooltip-box p-2 rounded-lg shadow-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                <div class="font-bold text-lg">${data.x}</div>
+                                <div class="text-sm">Pourcentage de Paquets: ${data.y}%</div>
+                                <div class="text-sm">Nombre Total de Paquets: ${data.count}</div>
+                                <div class="text-sm mt-2">Par Station:</div>
+                                ${stationsInfo}
+                            </div>`;
+                }
+            }
+        };
+
+        var distanceDistributionChart = new ApexCharts(distanceDistributionChartContainer, distanceDistributionChartOptions);
+        distanceDistributionChart.render();
+    });
+</script>

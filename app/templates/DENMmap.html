@@ -1,0 +1,441 @@
+{% extends "base.html" %} {% block title %} DENM MAP {% endblock %} {% block
+content %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<link
+    href="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.min.css"
+    rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.min.js"></script>
+<link
+    href="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.min.css"
+    rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"
+/>
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"
+/>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+    }
+</style>
+
+<div id="map"></div>
+<div class="flex flex-col items-center justify-center px-8 md:flex space-y-2">
+    <!-- Ajouté space-y-2 pour l'espace vertical entre les enfants -->
+    <div class="flex items-center justify-center space-x-2 mt-4">
+        <!-- Ajouté mt-4 pour l'espace avec les éléments au-dessus -->
+        <!-- Boutons de contrôle -->
+        <button
+            id="fastBackwardButton"
+            onclick="shiftTime(-10)"
+            class="p-2.5 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 dark:hover:bg-gray-600"
+        >
+            <svg
+                class="rtl:rotate-180 w-4 h-4 text-gray-500 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 12 16"
+            >
+                <path
+                    d="M10.819.4a1.974 1.974 0 0 0-2.147.33l-6.5 5.773A2.014 2.014 0 0 0 2 6.7V1a1 1 0 0 0-2 0v14a1 1 0 1 0 2 0V9.3c.055.068.114.133.177.194l6.5 5.773a1.982 1.982 0 0 0 2.147.33A1.977 1.977 0 0 0 12 13.773V2.227A1.977 1.977 0 0 0 10.819.4Z"
+                />
+            </svg>
+        </button>
+        <button
+            id="playPauseButton"
+            onclick="pausePlay()"
+            class="inline-flex items-center justify-center p-2.5 mx-2 font-medium bg-blue-600 rounded-full hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:focus:ring-blue-800"
+        >
+            <svg
+                id="playIcon"
+                class="w-6 h-6 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    fill-rule="evenodd"
+                    d="M8.6 5.2A1 1 0 0 0 7 6v12a1 1 0 0 0 1.6.8l8-6a1 1 0 0 0 0-1.6l-8-6Z"
+                    clip-rule="evenodd"
+                />
+            </svg>
+        </button>
+        <button
+            id="fastForwardButton"
+            onclick="shiftTime(10)"
+            class="p-2.5 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 dark:hover:bg-gray-600"
+        >
+            <svg
+                class="rtl:rotate-180 w-4 h-4 text-gray-500 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 12 16"
+            >
+                <path
+                    d="M11 0a1 1 0 0 0-1 1v5.7a2.028 2.028 0 0 0-.177-.194L3.33.732A2 2 0 0 0 0 2.227v11.546A1.977 1.977 0 0 0 1.181 15.6a1.982 1.982 0 0 0 2.147-.33l6.5-5.773A1.88 1.88 0 0 0 10 9.3V15a1 1 0 1 0 2 0V1a1 1 0 0 0-1-1Z"
+                />
+            </svg>
+        </button>
+
+        <!-- Bouton pour ouvrir le dropdown des stations -->
+        <button
+            id="dropdownToggleButton"
+            class="p-2.5 mx-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 dark:hover:bg-600 ml-auto"
+        >
+            <svg
+                class="w-4 h-4 text-gray-500 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-width="2"
+                    d="M20 6H10m0 0a2 2 0 1 0-4 0m4 0a2 2 0 1 1-4 0m0 0H4m16 6h-2m0 0a2 2 0 1 0-4 0m4 0a2 2 0 1 1-4 0m0 0H4m16 6H10m0 0a2 2 0 1 0-4 0m4 0a2 2 0 1 1-4 0m0 0H4"
+                />
+            </svg>
+        </button>
+
+        <div
+            class="dropdown-container flex items-center justify-center space-x-2 mt-4 relative"
+        >
+            <!-- Ajout de la classe 'relative' ici -->
+
+            <!-- Dropdown Menu -->
+            <div
+                id="dropdownToggle"
+                class="hidden absolute z-30 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
+                style="top: 100%; left: 0"
+            >
+                <!-- Ajouté 'top: 100%; left: 0;' pour positionner sous le bouton -->
+                <!-- Contenu du menu -->
+                <ul
+                    class="py-1 text-sm text-gray-700 dark:text-gray-200"
+                    aria-labelledby="dropdownToggleButton"
+                >
+                    {% for station in packets.get_denm_stations() %}
+                    <li>
+                        <div
+                            class="flex p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                            <label
+                                class="inline-flex items-center w-full cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    id="station-{{ station }}"
+                                    name="stations"
+                                    value="{{ station }}"
+                                    class="sr-only peer"
+                                />
+                                <div
+                                    class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:translate-x-[-100%] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-500 peer-checked:bg-blue-600"
+                                ></div>
+                                <span
+                                    class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300"
+                                    >Station : {{ station }}</span
+                                >
+                            </label>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="p-2">
+                    <button
+                        onclick="filterData()"
+                        class="w-full text-white bg-blue-600 hover:scale-125 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-green-500 dark:hover:bg-green-600 dark:focus:ring-green-800 flex justify-center items-center"
+                    >
+                        <svg
+                            class="w-6 h-6 dark:text-white"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-width="2"
+                                d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z"
+                            />
+                        </svg>
+                        <span class="ml-2">Filtrer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Réduction de l'espace entre les boutons et l'input -->
+    <div class="w-full px-8 py-1 flex items-center justify-between">
+        <!-- Réduit le padding vertical avec py-1 -->
+        <span
+            id="currentTime"
+            class="text-sm font-medium text-gray-500 dark:text-gray-400"
+            >00:00</span
+        >
+        <input
+            type="range"
+            id="timeSlider"
+            min="0"
+            max="100"
+            value="0"
+            class="range range-xs flex-grow mx-4 bg-blue-600 h-1.5 rounded-full"
+        />
+        <span
+            id="totalTime"
+            class="text-sm font-medium text-gray-500 dark:text-gray-400"
+            >05:00</span
+        >
+    </div>
+</div>
+
+<!-- Ajout des sélecteurs d'heure dans l'interface HTML -->
+<div class="time-selection-container flex items-center justify-center mt-4">
+    <input
+        type="time"
+        id="startTime"
+        class="text-center border rounded-lg px-2 py-1 mx-2"
+        value="00:00"
+    />
+    <span>à</span>
+    <input
+        type="time"
+        id="endTime"
+        class="text-center border rounded-lg px-2 py-1 mx-2"
+        value="23:59"
+    />
+    <button
+        onclick="filterData()"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    >
+        Appliquer le filtre horaire
+    </button>
+</div>
+<script>
+    // Toggle Dropdown
+    document
+        .getElementById("dropdownToggleButton")
+        .addEventListener("click", function () {
+            var dropdown = document.getElementById("dropdownToggle");
+            dropdown.classList.toggle("hidden");
+        });
+</script>
+<script>
+    var selectedStations = [];
+    var timeEntries;
+    var markers = L.markerClusterGroup();
+
+    function filterData() {
+        selectedStations = Array.from(document.querySelectorAll('input[name="stations"]:checked')).map(checkbox => checkbox.value);
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+
+        clearMap();
+        resetTime(); // Reset time to 0
+        updateMapForTimeIndex(0); // Reset map display with new filtered stations
+        updateTotalTime(); // Update total time after filtering
+    }
+
+    var initialPosition = {{ packets.get_first_position() | tojson }};
+    var denmCamAssociations = {{ packets.get_denm_cam_association() | tojson }};
+    var map = L.map('map').setView([initialPosition.latitude, initialPosition.longitude], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    var timeEntries = Object.keys(denmCamAssociations).sort((a, b) => new Date(denmCamAssociations[a][0].time) - new Date(denmCamAssociations[b][0].time));
+
+    var colorIndex = 0;
+    var colors = ['red', 'blue', 'green', 'purple', 'orange', 'yellow', 'teal', 'cyan', 'lime', 'magenta'];
+    var keyColors = {};  // Object to store color for each key
+    var lastPositions = {};  // Object to store last position for each key
+
+    function updateMapForTimeIndex(index) {
+        if (index < timeEntries.length) {
+            var key = timeEntries[index];
+            var stationId = key.split('-')[0];
+
+            if (!selectedStations.includes(stationId)) {
+                return; // Do not update map if current station is not selected
+            }
+
+            const currentTime = new Date(denmCamAssociations[key][0].time);
+            const currentDate = currentTime.toISOString().split('T')[0];
+
+            const startTime = new Date(`${currentDate}T${document.getElementById('startTime').value}:00`);
+            const endTime = new Date(`${currentDate}T${document.getElementById('endTime').value}:00`);
+
+            if (currentTime < startTime || currentTime > endTime) {
+                return;
+            }
+
+            if (!keyColors[key]) {
+                keyColors[key] = colors[colorIndex++ % colors.length]; // Assign color if necessary
+            }
+
+            var color = keyColors[key];
+            var entries = denmCamAssociations[key];
+            entries.forEach(entry => {
+                var position = entry.position;
+                if (position && position.length === 2) { // Ensure the position is valid
+                    var marker = L.marker([position[0], position[1]])
+                        .bindPopup(`Time: ${new Date(entry.time).toLocaleString()}<br>RHL: ${entry.rhl}<br>Station ID-Seq Num: ${key}`)
+                        .setOpacity(0.75);
+
+                    markers.addLayer(marker); // Add marker to cluster group
+
+                    if (lastPositions[key]) {
+                        var polyline = L.polyline([lastPositions[key], position], {color: color, weight: 4});
+                        markers.addLayer(polyline); // Add polyline to cluster group
+                    }
+
+                    lastPositions[key] = position; // Update last position
+                }
+            });
+            updateTimeDisplay(index); // Update time display
+        }
+    }
+
+    map.addLayer(markers); // Add cluster group to map
+
+    var timeSlider = document.getElementById('timeSlider');
+    timeSlider.max = timeEntries.length - 1;
+    timeSlider.oninput = function() {
+        updateMapForTimeIndex(parseInt(this.value, 10));
+    };
+
+    // Initialize the map with the first point in time
+    updateMapForTimeIndex(0);
+
+    var isPlaying = false;
+    var intervalId;
+
+    function shiftTime(shift) {
+        if (isPlaying) {
+            clearInterval(intervalId);
+            isPlaying = false;
+            updatePlayIcon();
+        }
+
+        let slider = document.getElementById('timeSlider');
+        let newValue = parseInt(slider.value, 10) + shift;
+        newValue = Math.max(0, Math.min(newValue, slider.max));
+        slider.value = newValue;
+        updateMapForTimeIndex(newValue);
+    }
+
+    function resetTime() {
+        if (isPlaying) {
+            clearInterval(intervalId);
+            isPlaying = false;
+            updatePlayIcon();
+        }
+
+        let slider = document.getElementById('timeSlider');
+        slider.value = 0;
+        updateMapForTimeIndex(0);
+    }
+
+    function pausePlay() {
+        var playIcon = document.getElementById('playIcon');
+        var slider = document.getElementById('timeSlider');
+        var playIndex = parseInt(slider.value, 10);
+
+        if (!isPlaying) {
+            intervalId = setInterval(() => {
+                if (playIndex <= slider.max) {
+                    slider.value = playIndex;
+                    updateMapForTimeIndex(playIndex);
+                    playIndex++;
+                } else {
+                    clearInterval(intervalId);
+                    isPlaying = false;
+                    updatePlayIcon();
+                }
+            }, 1000);
+            isPlaying = true;
+            updatePlayIcon();
+        } else {
+            clearInterval(intervalId);
+            isPlaying = false;
+            updatePlayIcon();
+        }
+    }
+
+    function updatePlayIcon() {
+        var playIcon = document.getElementById('playIcon');
+        if (isPlaying) {
+            playIcon.innerHTML = `<path d="M8 6h3v12H8zM13 6h3v12h-3z"/>`;
+        } else {
+            playIcon.innerHTML = `<path fill-rule="evenodd" d="M8.6 5.2A1 1 0 0 0 7 6v12a1 1 0 0 0 1.6.8l8-6a1 1 0 0 0 0-1.6l-8-6Z" clip-rule="evenodd"/>`;
+        }
+    }
+
+    function updateTimeDisplay(index) {
+        const currentTime = new Date(denmCamAssociations[timeEntries[index]][0].time);
+
+        const startTimeInput = document.getElementById('startTime').value;
+        const endTimeInput = document.getElementById('endTime').value;
+
+        if (!startTimeInput || !endTimeInput) {
+            const lastTime = new Date(denmCamAssociations[timeEntries[timeEntries.length - 1]][0].time);
+            document.getElementById('totalTime').innerHTML = formatDate(lastTime, true);
+            return;
+        }
+
+        const startTime = new Date(`1970-01-01T${startTimeInput}:00Z`);
+        const endTime = new Date(`1970-01-01T${endTimeInput}:00Z`);
+
+        const filteredTimeEntries = timeEntries.filter(entry => {
+            const entryTime = new Date(denmCamAssociations[entry][0].time);
+            return entryTime >= startTime && entryTime <= endTime;
+        });
+
+        const lastTimeInInterval = filteredTimeEntries.length > 0
+            ? new Date(denmCamAssociations[filteredTimeEntries[filteredTimeEntries.length - 1]][0].time)
+            : null;
+
+        const lastTime = new Date(denmCamAssociations[timeEntries[timeEntries.length - 1]][0].time);
+        const displayTime = lastTimeInInterval || lastTime;
+
+        const showFullDate = currentTime.toDateString() !== displayTime.toDateString();
+
+        document.getElementById('currentTime').innerHTML = formatDate(currentTime, showFullDate);
+        document.getElementById('totalTime').innerHTML = formatDate(displayTime, true);
+    }
+
+    function formatDate(date, showFullDate) {
+        const optionsTime = { hour: '2-digit', minute: '2-digit' };
+
+        if (showFullDate) {
+            const optionsFull = { hour: '2-digit', minute: '2-digit' };
+            return `<span class="text-blue-500">${date.toLocaleString('fr-FR', optionsFull)}</span>`;
+        } else {
+            return `<span class="text-blue-500">${date.toLocaleString('fr-FR', optionsTime)}</span>`;
+        }
+    }
+
+    function clearMap() {
+        markers.clearLayers();
+        keyColors = {};
+        lastPositions = {};
+    }
+</script>
+
+
+{% endblock %}

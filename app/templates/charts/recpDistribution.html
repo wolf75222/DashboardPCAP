@@ -1,0 +1,228 @@
+<div
+    class="bg-white rounded-lg shadow dark:bg-gray-800 p-6 hops-distribution-container-unique"
+>
+    <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+        Distribution des réceptions de sauts (DENM)
+    </h1>
+    <!-- Container for the combined boxplot chart -->
+    <div
+        id="combinedBoxplotContainerUnique"
+        class="bg-white rounded-lg shadow p-4 mb-6"
+    ></div>
+    <!-- Container for the histograms -->
+    <div id="chartsContainerUnique" class="grid gap-6"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var hopsData = {{ packets.get_reception_distribution() | tojson | safe }};
+        var combinedBoxplotContainer = document.getElementById('combinedBoxplotContainerUnique');
+        var chartsContainer = document.getElementById('chartsContainerUnique');
+        var stationCount = Object.keys(hopsData).length;
+
+        // Determine the number of columns based on the number of stations
+        var columns;
+        if (stationCount <= 2) {
+            columns = 1;
+        } else if (stationCount <= 4) {
+            columns = 2;
+        } else if (stationCount <= 6) {
+            columns = 3;
+        } else {
+            columns = 4;
+        }
+
+        // Set the appropriate grid columns class for the histograms
+        chartsContainer.classList.add(`grid-cols-${columns}`);
+
+        // Data for the combined boxplot
+        var boxplotData = [];
+        var statistics = {};
+
+        for (var stationId in hopsData) {
+            if (hopsData.hasOwnProperty(stationId)) {
+                var hopCounts = hopsData[stationId].map(d => d.hop_count);
+                var sortedCounts = [...hopCounts].sort((a, b) => a - b);
+
+                // Calculate statistics
+                var mean = hopCounts.reduce((acc, count) => acc + count, 0) / hopCounts.length;
+                var median = sortedCounts[Math.floor(sortedCounts.length / 2)];
+                var variance = hopCounts.reduce((acc, count) => acc + Math.pow(count - mean, 2), 0) / hopCounts.length;
+                var stdDev = Math.sqrt(variance);
+                var min = Math.min(...hopCounts);
+                var max = Math.max(...hopCounts);
+                var q1 = sortedCounts[Math.floor(sortedCounts.length / 4)];
+                var q3 = sortedCounts[Math.floor(sortedCounts.length * 3 / 4)];
+
+                statistics[stationId] = {
+                    mean: mean.toFixed(2),
+                    stdDev: stdDev.toFixed(2),
+                    variance: variance.toFixed(2),
+                    count: hopCounts.length
+                };
+
+                // Collect data for the boxplot
+                boxplotData.push({
+                    x: 'Station ' + stationId,
+                    y: [min, q1, median, q3, max]
+                });
+            }
+        }
+
+        // Render the combined boxplot
+        var boxplotOptions = {
+            series: [{
+                type: 'boxPlot',
+                data: boxplotData
+            }],
+            chart: {
+                type: 'boxPlot',
+                height: 350
+            },
+            plotOptions: {
+                boxPlot: {
+                    horizontal: true
+                }
+            },
+            xaxis: {
+                title: {
+                    text: 'Stations'
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Nombre de sauts'
+                }
+            },
+            tooltip: {
+                custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                    var data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
+                    var stationId = data.x.split(' ')[1];
+                    var stats = statistics[stationId];
+                    return `<div class="apexcharts-tooltip-box p-2 rounded-lg shadow-lg">
+                                <div class="font-bold text-lg">${data.x}</div>
+                                <div class="text-sm">Nombre de Paquets: ${stats.count}</div>
+                                <div class="text-sm">Min: ${data.y[0]} sauts</div>
+                                <div class="text-sm">Q1: ${data.y[1]} sauts</div>
+                                <div class="text-sm">Médiane: ${data.y[2]} sauts</div>
+                                <div class="text-sm">Q3: ${data.y[3]} sauts</div>
+                                <div class="text-sm">Max: ${data.y[4]} sauts</div>
+                                <div class="text-sm">&mu; (Moyenne): ${stats.mean}</div>
+                                <div class="text-sm">&sigma; (Écart Type): ${stats.stdDev}</div>
+                                <div class="text-sm">&sigma;<sup>2</sup> (Variance): ${stats.variance}</div>
+                            </div>`;
+                }
+            }
+        };
+
+        var combinedBoxplotChart = new ApexCharts(combinedBoxplotContainer, boxplotOptions);
+        combinedBoxplotChart.render();
+
+        // Render histograms
+        for (var stationId in hopsData) {
+            if (hopsData.hasOwnProperty(stationId)) {
+                var seriesData = hopsData[stationId].map((d, index) => ({
+                    x: 'Paquet ' + (index + 1),
+                    y: d.hop_count,
+                    passage_details: d.passage_details
+                }));
+
+                // Create a container for the histogram
+                var histogramDiv = document.createElement('div');
+                histogramDiv.classList.add('bg-white', 'rounded-lg', 'shadow', 'p-4', 'mb-4');
+                histogramDiv.style.paddingBottom = '20px'; // Add padding at the bottom
+                chartsContainer.appendChild(histogramDiv);
+
+                // Add a title for the histogram
+                var chartTitle = document.createElement('div');
+                chartTitle.classList.add('text-center', 'font-bold', 'mb-2');
+                chartTitle.innerText = 'Station ' + stationId;
+                histogramDiv.appendChild(chartTitle);
+
+                // Add number of packets sent below the title
+                var packetCount = document.createElement('div');
+                packetCount.classList.add('text-center', 'mb-2');
+                packetCount.innerText = 'Nombre de Paquets: ' + statistics[stationId].count;
+                histogramDiv.appendChild(packetCount);
+
+                // Create a chart div for the histogram
+                var chartDiv = document.createElement('div');
+                chartDiv.style.height = '350px'; // Adjust height to fit within the new container size
+                histogramDiv.appendChild(chartDiv);
+
+                // Chart options for the histogram
+                var histogramOptions = {
+                    series: [{
+                        name: 'Nombre de sauts',
+                        data: seriesData
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: '100%',
+                        toolbar: {
+                            show: false
+                        }
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '50%',
+                            endingShape: 'rounded'
+                        }
+                    },
+                    xaxis: {
+                        labels: {
+                            rotate: -45,
+                            maxHeight: 70, // Ensure there's enough space for the labels
+                            style: {
+                                fontSize: '12px'
+                            }
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Nombre de sauts'
+                        }
+                    },
+                    tooltip: {
+                        custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                            var data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
+                            var details = data.passage_details;
+                            var detailText = Object.keys(details).map(stationId => {
+                                return `Station ${stationId}: ${details[stationId]} fois`;
+                            }).join('<br>');
+
+                            return `<div class="apexcharts-tooltip-box p-2 rounded-lg shadow-lg">
+                                        <div class="font-bold text-lg">${data.x}</div>
+                                        <div class="text-sm">${detailText}</div>
+                                    </div>`;
+                        }
+                    }
+                };
+
+                // Render the histogram
+                var histogramChart = new ApexCharts(chartDiv, histogramOptions);
+                histogramChart.render();
+            }
+        }
+    });
+</script>
+
+<style>
+    .hops-distribution-container-unique .grid {
+        display: grid;
+        gap: 1.5rem; /* Correspond à 'gap-6' dans Tailwind CSS */
+    }
+    .hops-distribution-container-unique .grid-cols-1 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    .hops-distribution-container-unique .grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .hops-distribution-container-unique .grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .hops-distribution-container-unique .grid-cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+</style>

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+ {% block title %}Tableau de bord{% endblock %} 
+{% block content %}
+
+<div class="flex flex-col md:flex-row gap-4 p-4">
+ 
+   <!-- Contenu principal -->
+   <main class="flex-1">
+     <!-- En-tête avec des actions ou des filtres -->
+     <div class="mb-4 flex justify-between items-center">
+         <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Tableau de bord</h1>
+         <div class="flex gap-4">
+          <a href="/dashboard" class="rounded-xl text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-4 py-2 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">PCAP</a>
+           <button class="rounded-xl text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-4 py-2 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">CAM</button>
+         <button class="rounded-xl text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-4 py-2 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">DENM</button>
+         </div>   
+     </div>
+     
+     <!-- Grille pour les cartes de statistiques -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+
+   <!-- Carte de statistiques - Nombre total de paquets -->
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col items-center p-4">
+     <div class="flex-shrink-0">
+       <span class="text-2xl leading-none text-gray-900 dark:text-white">
+         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M10 12v1h4v-1m4 7H6a1 1 0 0 1-1-1V9h14v9a1 1 0 0 1-1 1ZM4 5h16a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/>
+         </svg> 
+       </span>
+     </div>
+     <div class="mt-3 flex flex-col items-center justify-center">
+       <p class="text-sm font-medium text-gray-600 dark:text-gray-200">Nombre de paquets</p>
+       <p class="text-lg font-bold text-gray-900 dark:text-white"> {{ total_packets }}</p>
+     </div>
+   </div>
+ 
+   <!-- Carte de statistiques - Nombre de CAM -->
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col items-center p-4">
+     <div class="flex-shrink-0">
+       <span class="text-2xl leading-none text-gray-900 dark:text-white">
+         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 9h5m3 0h2M7 12h2m3 0h5M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-6.616a1 1 0 0 0-.67.257l-2.88 2.592A.5.5 0 0 1 8 18.477V17a1 1 0 0 0-1-1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/>
+          </svg>
+       </span>
+     </div>
+     <div class="mt-3 flex flex-col items-center justify-center">
+       <p class="text-sm font-medium text-gray-600 dark:text-gray-200">Nombre de CAM</p>
+       <p class="text-lg font-bold text-gray-900 dark:text-white">{{ total_cam }}</p>
+     </div>
+   </div>
+ 
+   <!-- Carte de statistiques - Nombre de DENM -->
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col items-center p-4">
+     <div class="flex-shrink-0">
+       <span class="text-2xl leading-none text-gray-900 dark:text-white">
+         <svg svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5.464V3.099m0 2.365a5.338 5.338 0 0 1 5.133 5.368v1.8c0 2.386 1.867 2.982 1.867 4.175C19 17.4 19 18 18.462 18H5.538C5 18 5 17.4 5 16.807c0-1.193 1.867-1.789 1.867-4.175v-1.8A5.338 5.338 0 0 1 12 5.464ZM6 5 5 4M4 9H3m15-4 1-1m1 5h1M8.54 18a3.48 3.48 0 0 0 6.92 0H8.54Z"/>
+          </svg> 
+       </span>
+     </div>
+     <div class="mt-3 flex flex-col items-center justify-center">
+       <p class="text-sm font-medium text-gray-600 dark:text-gray-200">Nombre de DENM</p>
+       <p class="text-lg font-bold text-gray-900 dark:text-white">{{ total_denm }}</p>
+     </div>
+   </div>
+ 
+   <!-- Carte de statistiques - Nombre d'Autres -->
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col items-center p-4">
+     <div class="flex-shrink-0">
+       <span class="text-2xl leading-none text-gray-900 dark:text-white">
+         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.529 9.988a2.502 2.502 0 1 1 5 .191A2.441 2.441 0 0 1 12 12.582V14m-.01 3.008H12M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+          </svg>
+       </span>
+     </div>
+     <div class="mt-3 flex flex-col items-center justify-center">
+       <p class="text-sm font-medium text-gray-600 dark:text-gray-200">Nombre d'Autres</p>
+       <p class="text-lg font-bold text-gray-900 dark:text-white">{{ total_autres + total_ipv6}}</p>
+     </div>
+   </div>
+ 
+ </div>
+ 
+     
+     <!-- Ligne pour les graphiques -->
+     <div class="flex flex-col lg:flex-row gap-4 mb-4">
+      <div class="flex-1 lg:w-3/4 bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+        {% include 'charts/graph_time.html' %}
+      </div>
+      <div class="lg:w-full bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+        {% include 'charts/counts.html' %}
+      </div>
+    </div>
+    
+     
+    <div class="flex flex-col lg:flex-row gap-4 mb-4">
+      <div class="w-full bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+        {% include 'charts/mac.html' %}
+      </div>
+    </div>
+      <!-- 1 graphique = une ligne -->
+      <div class="flex flex-col lg:flex-row gap-4 mb-4">
+        <div class="flex-1 lg:w-full bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+          {% include 'charts/source.html' %}
+        </div>
+      </div>
+
+
+      
+     
+     <!-- Autres sections du tableau de bord -->
+     <!-- ... -->
+   </main>
+ </div>
+ 
+ 
+
+{% endblock %}

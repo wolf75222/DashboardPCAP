@@ -1,0 +1,118 @@
+{% extends "base.html" %} 
+{% block title %}Téléchargement de fichier{% endblock%}
+{% block content %}
+
+<div class="container mx-auto px-4 py-12">
+    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-300 mb-6">
+        Téléchargement de fichiers PCAP à convertir en JSON
+    </h1>
+    <form
+        id="file-upload-form"
+        method="post"
+        action="/upload"
+        enctype="multipart/form-data"
+    >
+        <div class="flex items-center justify-center w-full">
+            <label
+                for="dropzone-file"
+                class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:hover:border-gray-500"
+            >
+                <div
+                    class="flex flex-col items-center justify-center pt-5 pb-6"
+                >
+                    <svg
+                        class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 20 16"
+                    >
+                        <path
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                        />
+                    </svg>
+                    <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span class="font-semibold"
+                            >Cliquez pour télécharger</span
+                        >
+                        ou par glisser-déposer
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Fichiers PCAP uniquement
+                    </p>
+                </div>
+                <input
+                    id="dropzone-file"
+                    type="file"
+                    name="files"
+                    class="hidden"
+                    multiple
+                />
+            </label>
+        </div>
+        <button
+            type="submit"
+            class="mt-5 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2"
+        >
+            <svg
+                class="w-6 h-6"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 5v9m-5 0H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-2M8 9l4-5 4 5m1 8h.01"
+                />
+            </svg>
+            <span>Télécharger et convertir</span>
+        </button>
+    </form>
+</div>
+
+
+    <div class="w-full flex items-center justify-center my-8">
+        <div class="border-t border-gray-300 flex-grow mr-3"></div>
+        <span class="text-gray-600 text-sm px-4"
+            >Fichiers JSON disponibles</span
+        >
+        <div class="border-t border-gray-300 flex-grow ml-3"></div>
+    </div>
+
+    <div class="flex flex-col items-center">
+        <ul class="w-full max-w-md list-none bg-white rounded-lg shadow-md mt-4 rounded-xl">
+            {% for file in recent_files %}
+            <li class="border-b border-gray-200">
+                <form action="/packets/{{ file }}" method="GET" class="relative group">
+                    <button type="submit" class="w-full text-left flex items-center p-4 hover:bg-gray-100 pl-10 group-hover:pl-4 hover:text-blue-500">
+                        <span class="absolute left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out hover:text-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6 text-blue-500">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </span>
+                        <span class="ml-1 group-hover:ml-7 transition-all duration-300 ease-in-out">
+                            {{ file }}
+                        </span>
+                    </button>
+                </form>
+            </li>
+            {% else %}
+            <li class="border-b border-gray-200">Aucun fichier disponible</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    
+    
+</div>
+{% endblock %}

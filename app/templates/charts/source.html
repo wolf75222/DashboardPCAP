@@ -1,0 +1,98 @@
+<div class="flex-1 lg:w-full bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Volume de trafic par adresse MAC</h1>
+        <button id="toggleBroadcastTraffic" class="bg-transparent hover:bg-gray-100 p-2 rounded-lg">
+            <svg class="w-6 h-6 text-blue-500 dark:text-blue-300 show-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+            </svg>
+            <svg class="w-6 h-6 text-blue-500 dark:text-blue-300 hide-icon hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+            </svg>
+        </button>
+    </div>
+    <!-- Chart Container -->
+    <div class="relative h-64 mt-4">
+        <canvas id="trafficChart"></canvas>
+    </div>
+</div>
+ 
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const srcTraffic = {{ packets.get_src_traffic() | tojson | safe }};
+        const dstTraffic = {{ packets.get_dst_traffic() | tojson | safe }};
+        const broadcastMac = 'ff:ff:ff:ff:ff:ff'; // Example MAC address for broadcast
+        const toggleButton = document.getElementById('toggleBroadcastTraffic');
+        const showIcon = toggleButton.querySelector('.show-icon');
+        const hideIcon = toggleButton.querySelector('.hide-icon');
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        let chartInstance;
+        let filterBroadcast = false;
+    
+        // Toggle icon visibility and filter setting
+        toggleButton.addEventListener('click', () => {
+            filterBroadcast = !filterBroadcast;
+            if (filterBroadcast) {
+                showIcon.classList.add('hidden');
+                hideIcon.classList.remove('hidden');
+            } else {
+                showIcon.classList.remove('hidden');
+                hideIcon.classList.add('hidden');
+            }
+            updateChart();
+        });
+    
+        // Function to filter and retrieve chart data
+        function getChartData() {
+            return {
+                srcLabels: Object.keys(srcTraffic).filter(mac => !filterBroadcast || mac !== broadcastMac),
+                srcVolumes: Object.values(srcTraffic).filter((_, i) => !filterBroadcast || Object.keys(srcTraffic)[i] !== broadcastMac),
+                dstLabels: Object.keys(dstTraffic).filter(mac => !filterBroadcast || mac !== broadcastMac),
+                dstVolumes: Object.values(dstTraffic).filter((_, i) => !filterBroadcast || Object.keys(dstTraffic)[i] !== broadcastMac)
+            };
+        }
+    
+        // Function to create and update the chart
+        function updateChart() {
+            const { srcLabels, srcVolumes, dstLabels, dstVolumes } = getChartData();
+            if (chartInstance) {
+                chartInstance.destroy(); // Destroys the current chart instance before creating a new one
+            }
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: srcLabels.concat(dstLabels),
+                    datasets: [{
+                        label: 'Volume de trafic de source',
+                        data: srcVolumes.concat(dstVolumes.map(() => null)),
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Volume de trafic de destination',
+                        data: srcVolumes.map(() => null).concat(dstVolumes),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: true, text: 'Trafic par adresse MAC' }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    
+        updateChart(); // Initial chart creation
+    });
+    </script>
+    

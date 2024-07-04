@@ -1,0 +1,76 @@
+<div class="w-full h-auto bg-white rounded-lg shadow dark:bg-gray-800 p-6 my-4">
+    <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+        Distances maximales des réceptions de paquets DENM
+    </h1>
+    <!-- Container for the max distance chart -->
+    <div
+        id="maxDistanceChartContainer"
+        class="bg-white rounded-lg shadow p-4 mb-6"
+        style="height: 400px"
+    ></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Retrieve the distance data from the server-side rendering context
+        var maxDistanceData = {{ packets.get_furthest_station_distance() | tojson | safe }};
+        console.log(maxDistanceData);  // Debugging: Check the data in the console
+        var maxDistanceChartContainer = document.getElementById('maxDistanceChartContainer');
+
+        // Prepare data for the chart
+        var seriesData = [];
+        for (var stationId in maxDistanceData) {
+            if (maxDistanceData.hasOwnProperty(stationId)) {
+                seriesData.push({
+                    x: 'Station ' + stationId,
+                    y: Math.round(maxDistanceData[stationId]) // Round values to the nearest integer
+                });
+            }
+        }
+
+        // Chart options
+        var maxDistanceChartOptions = {
+            series: [{
+                name: 'Distance maximale (mètres)',
+                data: seriesData
+            }],
+            chart: {
+                type: 'bar',
+                height: 350
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '50%',
+                    endingShape: 'rounded'
+                }
+            },
+            xaxis: {
+                title: {
+                    text: 'Stations'
+                },
+                categories: seriesData.map(data => data.x)
+            },
+            yaxis: {
+                title: {
+                    text: 'Distance (mètres)'
+                },
+                labels: {
+                    formatter: function (value) {
+                        return value; // Display rounded integer values
+                    }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function (value) {
+                        return value + ' mètres';
+                    }
+                }
+            }
+        };
+
+        var maxDistanceChart = new ApexCharts(maxDistanceChartContainer, maxDistanceChartOptions);
+        maxDistanceChart.render();
+    });
+</script>

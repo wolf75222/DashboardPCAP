@@ -1,0 +1,37 @@
+{% include 'layouts/header.html' %}
+{% include 'layouts/navbar.html' %}
+
+<body class="bg-gray-100 dark:bg-gray-900">
+    {% include 'layouts/loader.html' %}
+    {% include 'layouts/messages.html' %}
+    <main class="relative mx-auto">
+        <!-- Full page background excluding navbar and footer -->
+        <div class="jumbo absolute inset-0 z-0 opacity-20"></div>
+        <div class="content z-10 relative container mx-auto px-4 py-6"> 
+            {% block content %}
+            <!-- Specific page content goes here -->
+            {% endblock %}
+        </div>
+    </main>
+
+    {% include 'layouts/footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="{{ url_for('static', filename='node_modules/flowbite/dist/flowbite.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function(event) { 
+            hideLoading(); 
+        });
+        
+        function showLoading() {
+            document.getElementById("loading").style.display = "flex";
+        }
+        
+        function hideLoading() {
+            document.getElementById("loading").style.display = "none";
+        }
+    </script>
+</body>
+</html>

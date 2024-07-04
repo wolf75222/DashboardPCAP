@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}DENM Timeline{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-center mb-4">DENM Packet Timeline</h1>
+    <form id="timelineForm" class="max-w-md mx-auto">
+        <div class="mb-6">
+            <label for="stationId" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Select Station ID</label>
+            <select id="stationId" name="stationId" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <!-- Station IDs populated dynamically -->
+            </select>
+        </div>
+        <div class="mb-6">
+            <label for="seqNum" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Select Sequence Number</label>
+            <select id="seqNum" name="seqNum" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <!-- Sequence Numbers populated dynamically -->
+            </select>
+        </div>
+        <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Voir la timeline</button>
+    </form>
+</div>
+
+
+<!-- Modals for each timeline with optimized centering and spacing -->
+{% for timeline in denm_timelines %}
+<div id="modal{{ timeline[0].stationID }}-{{ timeline[0].seqNum }}" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto fixed inset-0 z-50 flex justify-center items-center px-4 py-8">
+    <div class="relative w-full max-w-4xl mx-auto bg-white rounded-lg shadow dark:bg-gray-700">
+        <!-- Modal header -->
+        <div class="flex items-center justify-between p-4 border-b dark:border-gray-600">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Station ID: {{ timeline[0].stationID }} Sequence Number: {{ timeline[0].seqNum }}
+            </h3>
+            <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm h-8 w-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-toggle="modal{{ timeline[0].stationID }}-{{ timeline[0].seqNum }}" onclick="window.location.href='/DENMtimeline'">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                </svg>
+                <span class="sr-only">Close modal</span>
+            </button>   
+        </div>
+        <!-- Modal body with horizontal scroll -->
+        <div class="flex overflow-x-auto pb-5 px-5 p-2">
+            <ol class="flex min-w-max">
+                {% for event in timeline %}
+                <li class="relative sm:mb-0 flex-none w-64 mr-4 last:mr-0">
+                    <div class="flex items-center">
+                        <div class="z-10 flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full ring-0 ring-white dark:bg-blue-900 sm:ring-8 dark:ring-gray-900 shrink-0">
+                            <!-- Icon placeholder -->
+                            <svg class="w-2.5 h-2.5 text-blue-800 dark:text-blue-300" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                            </svg>
+                        </div>
+                        <div class="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
+                    </div>
+                    <div class="mt-3 sm:pe-8">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ event.eth_src }} &rarr; {{ event.eth_dst }}</h3>
+                        <time class="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">{{ event.time }}</time>
+                        <p class="text-base font-normal text-gray-500 dark:text-gray-400">Lat: {{ event.lat }}, Lon: {{ event.lon }}, RHL: {{ event.rhl }}</p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const baseUrl = '/api';
+    
+    function fetchData() {
+        axios.get(`${baseUrl}/stations`)
+            .then(response => {
+                const { stationIds, sequenceNumbers } = response.data;
+                populateSelect(document.getElementById('stationId'), stationIds);
+                populateSelect(document.getElementById('seqNum'), sequenceNumbers);
+            })
+            .catch(error => {
+                console.error('Error fetching station data:', error);
+                alert('Failed to load data.');
+            });
+    }
+
+    function populateSelect(selectElement, options) {
+        selectElement.innerHTML = '';
+        options.forEach(option => {
+            const optionElement = new Option(option, option);
+            selectElement.add(optionElement);
+        });
+    }
+
+    fetchData();
+});
+
+document.getElementById('timelineForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var stationId = document.getElementById('stationId').value;
+    var seqNum = document.getElementById('seqNum').value;
+    var modalId = 'modal' + stationId + '-' + seqNum;
+    var modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.toggle('hidden');
+        modal.classList.toggle('flex');
+    }
+});
+</script>
+
+<!-- Flowbite JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+
+{% endblock %}
+
+    
